@@ -39,6 +39,9 @@
 </head>
 <body>
 <div class="container">
+    <?php if( Session::has('notice') ): ?>
+        <p><?php echo Session::get('notice'); ?></p>
+    <?php endif; ?>
     <nav>
         <?php if( Session::has('user') ): ?>
             Welcome, <?php echo Session::get('user')->givenName; ?> |

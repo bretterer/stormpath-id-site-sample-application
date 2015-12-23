@@ -23,8 +23,6 @@ $spapplication = \Stormpath\Resource\Application::get($_ENV['STORMPATH_APPLICATI
 
 $app->get('/', function() use ($app) {
     $app->configure('app');
-    dd(env('STORMPATH_ID'));
-    dd(Config::get('app.locale'));
     return view('welcome');
 });
 
@@ -46,17 +44,18 @@ $app->get('forgotPassword', function() use ($spapplication) {
 
 
 $app->get('logout', function() use ($spapplication) {
-    if(!Session::has('user')) {
-        return redirect('/?test=test');
-    }
     $url = $spapplication->createIdSiteUrl(['logout'=>true, 'callbackUri'=>'http://localhost:8000/idSiteResponse']);
 
     return redirect($url);
 });
 
 $app->get('idSiteResponse', function() use ($spapplication, $app) {
-    $response = $spapplication->handleIdSiteCallback($_SERVER['REQUEST_URI']);
-
+    try {
+        $response = $spapplication->handleIdSiteCallback($_SERVER['REQUEST_URI']);
+    } catch (Exception $e) {
+        Session::flash('notice', $e->getMessage());
+        return redirect('/');
+    }
     switch($response->status) {
         case 'AUTHENTICATED' :
             Session::put('user', $response->account);
@@ -68,6 +67,10 @@ $app->get('idSiteResponse', function() use ($spapplication, $app) {
             Session::flash('notice', 'You have been logged out');
             return redirect('/');
             break;
+        default :
+            Session::flash('notice', 'We handled the ' . $response->status . ' response!');
+            return redirect('/');
+
 
     }
 
